@@ -1,0 +1,50 @@
+flowchart TD
+    subgraph Institutional_Participants["Institutional Participants"]
+        LP_Senior["Senior Tranche Investor (Accredited)"]
+        LP_Junior["Junior Tranche Investor (First-Loss Capital)"]
+        Issuer["Regulated Asset Issuer / Broker-Dealer"]
+        Keeper["Automated Crank / Off-Chain Settlement Keeper"]
+    end
+
+    subgraph Solana_Runtime["Solana Sealevel Runtime (Local Fee Market)"]
+        subgraph Program_State["Sovereign Yield Core Program (SYE)"]
+            PoolConfig["PDA: ['pool_config', mint]\n- Senior/Junior NAV\n- Yield Rate (BPS)\n- Total Outstanding"]
+            KYCRegistry["PDA: ['kyc_registry', authority]\n- BitMap / Merkle Root\n- OFAC Blacklist Bitmap"]
+            SeniorVault["PDA: ['vault', 'senior']\nUnderlying Asset Account (USDC)"]
+            JuniorVault["PDA: ['vault', 'junior']\nUnderlying Asset Account (USDC)"]
+            RedemptionQueue["PDA: ['redemptions', epoch]\n- Batched Settlement Queue"]
+        end
+
+        subgraph Token_2022["Token-2022 Extensions Core"]
+            SeniorMint["Senior Token-2022 Mint\n- Interest-Bearing Config\n- Transfer Hook Extension\n- Default State: Frozen"]
+            JuniorMint["Junior Token-2022 Mint\n- Dynamic Floating Yield\n- Transfer Hook Extension"]
+            TransferHookProg["Transfer Hook Program\n- Checks ['kyc_registry']\n- Enforces Lockup / Jurisdiction"]
+        end
+
+        subgraph Oracles_External["External Feeds & Custody"]
+            PythFeed["Pyth / Chainlink RWA Price Feed\n(Off-chain T-Bill Discount Curve)"]
+            CustodyBank["Off-Chain Qualified Custodian\n(Fedwire / BNY Mellon Reserve)"]
+        end
+    end
+
+    %% Investment Flows
+    LP_Senior -- "1. Deposit USDC" --> SeniorVault
+    SeniorVault -.->|"2. Mints sTBILL via Token-2022"| SeniorMint
+    SeniorMint -- "3. Credit sTBILL" --> LP_Senior
+
+    LP_Junior -- "1. Deposit USDC (Subordinated)" --> JuniorVault
+    JuniorVault -.->|"2. Mints jCREDIT via Token-2022"| JuniorMint
+    JuniorMint -- "3. Credit jCREDIT" --> LP_Junior
+
+    %% Transfer Hook Validation
+    LP_Senior -- "Secondary OTC / DEX Transfer" --> TransferHookProg
+    TransferHookProg -->|"CPI Verify KYC/AML Bitwise State"| KYCRegistry
+    KYCRegistry -- "Approved" --> SeniorMint
+
+    %% Yield & Keeper Oracles
+    PythFeed -- "Real-time NAV Push" --> Keeper
+    CustodyBank -- "Attestation of Reserve (AoR)" --> Keeper
+    Keeper -- "Epoch Crank: Rebalance & Distribute Yield" --> PoolConfig
+    PoolConfig -->|"Update Interest-Bearing Rate"| SeniorMint
+    PoolConfig -->|"Settles Batched Burn Requests"| RedemptionQueue
+    RedemptionQueue -->|"Unlocks Capital"| SeniorVault
