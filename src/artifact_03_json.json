@@ -1,0 +1,25 @@
+{
+  "name": "@astracredit/enterprise-client",
+  "version": "1.0.0",
+  "description": "Enterprise Servicing & Event Orchestrator for Solana Credit Pools",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "cli": "ts-node src/cli.ts"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.30.0",
+    "@solana/web3.js": "^1.91.8",
+    "@solana/spl-token": "^0.4.6",
+    "dotenv": "^16.4.5",
+    "resend": "^3.2.0",
+    "axios": "^1.6.8",
+    "commander": "^12.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "typescript": "^5.4.5",
+    "ts-node": "^10.9.2"
+  }
+}

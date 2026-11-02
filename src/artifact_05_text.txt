@@ -1,0 +1,19 @@
+[00:00 - 00:15] INTRO: THE RWA SUPERCYCLE OPPORTUNITY
+(Visual: High-impact graph displaying $1.7 Trillion Private Credit expansion vs On-Chain RWA Growth.)
+Narrator: "The Tokenization Supercycle is not about moving static US Treasuries on-chain. It is about migrating the $1.7 Trillion structured private credit market onto Solana. Traditional debt facilities suffer from multi-day settlement delays, opaque waterfall servicing, and manual compliance reconciliation."
+
+[00:15 - 00:40] ARCHITECTURE & SOLANA COMPOSABILITY
+(Visual: Fast switch to Mermaid diagram, zooming into Solana Token-2022 Transfer Hooks and PDA-driven Tranche Vaults.)
+Narrator: "We built an institutional-grade Structured Credit Engine powered by Anchor and Token-2022. By leveraging native Transfer Hooks, every transfer checks accredited compliance real-time—eliminating the need for custom, isolated liquidity pools. Solana’s 400ms blocks allow us to run real-time continuous interest compounding at sub-cent compute fees."
+
+[00:40 - 01:15] LIVE TERMINAL DEMO: THE WATERFALL IN ACTION
+(Visual: Terminal running 'anchor test'. Watch logs execute 'process_waterfall_repayment' under 29,000 CU.)
+Narrator: "Watch the execution: Investor A deposits 500 USDC into the Senior AA-Tranche. When the corporate borrower initiates a repayment, our on-chain waterfall dynamically handles interest first, principal preservation second, and channels subordinate yield to junior risk-absorbers in a single transaction. Even when simulated defaults occur, the junior first-loss buffer protects senior capital without halts."
+
+[01:15 - 01:45] ENTERPRISE PERFORMANCE & CU OPTIMIZATION
+(Visual: Flamegraph and Solana CU profiler showing 26k CU on deposits and zero memory leaks.)
+Narrator: "Unlike EVM rollups where multi-tranche calculations cause gas spikes, our contracts execute in under 29k Compute Units. Full safety, checked math, zero-copy PDAs, and instant settlement give traditional institutions institutional-grade security with Web3 composability."
+
+[01:45 - 02:00] CONCLUSION & FIRST-PLACE PITCH
+(Visual: Summary slide listing: Anchor 0.30, Token-2022 native, sub-second settlement, production-ready.)
+Narrator: "This is not a mock POC. It is a production-grade blueprint for the next phase of the Solana Tokenization Supercycle. Real capital. Instant finality. Zero compromise. Thank you."

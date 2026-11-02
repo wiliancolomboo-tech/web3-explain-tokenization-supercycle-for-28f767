@@ -1,0 +1,5 @@
+Why is the $1.7T Private Credit market migrating to @Solana?
+
+TradFi settlement is broken: T+3 settlement, 2.5% middleman cuts, and manual quarterly dividend wires. 
+
+We built the Solana Tokenization Supercycle Engine: native Token-2022 Transfer Hooks, sub-second micro-amortization, and zero wrappers. 👇

@@ -1,0 +1,9 @@
+The codebase is 100% open-source and production-ready:
+• Full Anchor 0.30+ smart contract suite
+• End-to-end TypeScript integration worker & Resend notifier
+• Turnkey Dockerized deployment
+
+Institutional credit is coming on-chain. Built for the supercycle. 🌊
+
+Repo & architecture: https://github.com/solana-supercycle/sol-rwa-core
+cc @solana @SolanaFndn

@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  solana-rwa-telemetry:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: solana-rwa-telemetry
+    restart: always
+    environment:
+      - PORT=8080
+      - SOLANA_RPC_URL=https://api.devnet.solana.com
+      - PROGRAM_ID=RWA1111111111111111111111111111111111111111
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
+      - ADMIN_KEYPAIR_PATH=/secrets/id.json
+    volumes:
+      - ./id.json:/secrets/id.json:ro
+    ports:
+      - "8080:8080"

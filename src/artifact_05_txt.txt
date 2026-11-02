@@ -1,0 +1,8 @@
+client/
+├── package.json
+├── tsconfig.json
+├── src/
+│   ├── config.ts
+│   ├── enterprise-notifier.ts
+│   ├── aegis-client.ts
+│   └── cli.ts

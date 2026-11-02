@@ -1,0 +1,16 @@
+[package]
+name = "invoice-credit-engine"
+version = "0.1.0"
+description = "Solana Token-2022 Private Credit & Invoice Factoring Vault"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "invoice_credit_engine"
+
+[dependencies]
+anchor-lang = { version = "0.30.1", features = ["init-if-needed"] }
+anchor-spl = { version = "0.30.1", features = ["token_2022", "token"] }
+spl-token-2022 = { version = "0.11", features = ["no-entrypoint"] }
+spl-transfer-hook-interface = "0.6"
+solana-program = "1.18"

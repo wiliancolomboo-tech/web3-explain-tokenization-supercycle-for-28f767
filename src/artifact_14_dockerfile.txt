@@ -1,0 +1,22 @@
+FROM node:20-slim AS builder
+
+WORKDIR /usr/src/app
+
+COPY client/package*.json client/tsconfig.json ./
+RUN npm ci
+
+COPY client/src ./src
+RUN npm run build
+
+FROM node:20-slim
+
+WORKDIR /app
+COPY --from=builder /usr/src/app/package*.json ./
+COPY --from=builder /usr/src/app/dist ./dist
+RUN npm ci --only=production
+
+ENV NODE_ENV=production
+ENV SOLANA_RPC_URL=https://api.devnet.solana.com
+
+EXPOSE 8080
+CMD ["node", "dist/cli.js", "daemon"]

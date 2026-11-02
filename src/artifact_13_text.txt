@@ -1,0 +1,9 @@
+client/
+├── package.json
+├── tsconfig.json
+└── src/
+    ├── services/
+    │   ├── notification.ts
+    │   └── solana.ts
+    ├── index.ts
+    └── keeper.ts

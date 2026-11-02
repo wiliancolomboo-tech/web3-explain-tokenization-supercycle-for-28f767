@@ -1,0 +1,8 @@
+SOLANA_RPC_URL="https://api.devnet.solana.com"
+SOLANA_WS_URL="wss://api.devnet.solana.com"
+PROGRAM_ID="CREdtEne11111111111111111111111111111111111"
+SPONSOR_KEYPAIR_PATH="/root/.config/solana/id.json"
+SLACK_WEBHOOK_URL="https://api.example.com/webhooks/alerts/placeholder"
+RESEND_API_KEY="re_1234567890abcdef"
+COMPLIANCE_EMAIL="compliance-officer@spv-holdings.com"
+PORT=8080

@@ -1,16 +1,7 @@
-+------------------------------------------------------------------------------------+
-|                                 CORE ADVANTAGES                                    |
-+------------------------------------------------------------------------------------+
-| 1. Dynamic NAV Accrual   | Token-2022 Interest-Bearing extension updates continuous|
-|                          | yields without triggering state-bloating token transfers.|
-+--------------------------+---------------------------------------------------------+
-| 2. Enforced Compliance   | Transfer Hook CPI intercepts every secondary transfer;  |
-|                          | rejects non-KYC/sanctioned wallets at runtime via a     |
-|                          | dynamic O(1) PDA Identity Bitmap.                        |
-+--------------------------+---------------------------------------------------------+
-| 3. Dual-Tranche Engine   | Senior (fixed yield, priority capital protection) and    |
-|                          | Junior (first-loss, floating variable yield) pools.     |
-+--------------------------+---------------------------------------------------------+
-| 4. Instant Liquidity AMM | Zero-slippage redemption buffer backed by atomic        |
-|                          | intraday repo swap facilities.                          |
-+------------------------------------------------------------------------------------+
++-----------------------------------------------------------------------------------------+
+|                              THE TOKENIZATION SUPERCYCLE                                |
+|                                                                                         |
+|  Legacy Paper Invoice       Solana Token-2022 Vault        Global Secondary Liquidity   |
+|  [ 90-Day Payment Term ] => [ Atomic Mint & Hook Verify ] => [ Instantly Tradable RWA ]   |
+|  Yield: Trapped Capital     Yield: 11.4% Net APR           Settlement: 400ms Sub-Cent   |
++-----------------------------------------------------------------------------------------+

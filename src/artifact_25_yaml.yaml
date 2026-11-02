@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  rwa-orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: solana-rwa-orchestrator
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=production
+      - SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
+      - SOLANA_WS_URL=wss://api.mainnet-beta.solana.com
+      - PROGRAM_ID=RWA1111111111111111111111111111111111111111
+      - AUTHORITY_PRIVATE_KEY=/run/secrets/authority_key
+      - RESEND_API_KEY_FILE=/run/secrets/resend_api_key
+      - SLACK_WEBHOOK_URL_FILE=/run/secrets/slack_webhook_url
+      - RESEND_FROM_EMAIL=notifications@institutional-rwa.finance
+      - ALERT_RECIPIENT_EMAIL=ops@institutional-fund.com
+      - PORT=8080
+    secrets:
+      - authority_key
+      - resend_api_key
+      - slack_webhook_url
+
+secrets:
+  authority_key:
+    file: ./secrets/authority_key.json
+  resend_api_key:
+    file: ./secrets/resend_api_key.txt
+  slack_webhook_url:
+    file: ./secrets/slack_webhook.txt

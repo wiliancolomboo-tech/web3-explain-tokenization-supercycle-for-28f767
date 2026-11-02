@@ -1,0 +1,7 @@
+Unlike EVM wrapper hacks (ERC-3643), Solana's Token Extensions execute institutional compliance natively at the runtime level.
+
+✅ Transfer Hook AML/KYC checks on EVERY balance change
+✅ Non-custodial bankruptcy liquidation via Permanent Delegate
+✅ Real-time notifications dispatched via @resend
+
+All under 400ms finality. 🛡️

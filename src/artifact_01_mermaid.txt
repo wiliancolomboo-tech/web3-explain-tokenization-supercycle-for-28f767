@@ -1,0 +1,40 @@
+flowchart TD
+    subgraph Real World Assets [Physical Solar Asset & Telemetry Layer]
+        IoT[Commercial Solar Array Smart Meters] -->|Production Telemetry kWh| EdgeGW[SolarEdge / Enphase Gateway]
+        EdgeGW -->|Signed Telemetry Payloads| AgentService[Enterprise Orchestrator & Telemetry Worker]
+        Offtaker[Corporate Off-taker PPA Payments] -->|Fiat Cash Flow| CustodyBank[Regulated Escrow Bank / Circle Mint]
+        CustodyBank -->|USDC Minting| VaultWallet[Protocol Funding Treasury]
+    end
+
+    subgraph OffChain Services [Off-Chain Enterprise Automation Layer]
+        AgentService -->|1. Validate Telemetry & Yield Ratio| AgentService
+        AgentService -->|2. Dispatch Yield Batch TX| SolanaRPC[Solana Mainnet/Devnet RPC]
+        AgentService -->|3. Investor Settlement Alert| ResendAPI[Resend Transactional Email API]
+        AgentService -->|4. Compliance & Securitization Event| SlackWebhook[Institutional Slack/Discord Security Hook]
+        ResendAPI --> LP_Email[Accredited LP Investors]
+        SlackWebhook --> ComplianceTeam[Enterprise Securitization Ops]
+    end
+
+    subgraph Solana Token2022 [Solana Core Engine & Token Extensions]
+        SolanaRPC --> Program[SolPV Securitization Core Program]
+        
+        subgraph Anchor Program Logic
+            Program --> TranchePool[Tranche Pool PDA: State, Metrics, Oracle]
+            Program --> TransferHookProg[Token-2022 Transfer Hook Program]
+            Program --> YieldDistributor[Atomic Waterfall Engine]
+        end
+
+        subgraph Token Extensions Layer
+            TranchePool --> SeniorToken[Senior Tranche Token-2022: Transfer Hook + Metadata]
+            TranchePool --> JuniorToken[Subordinated Tranche Token-2022: Transfer Hook + Metadata]
+            TransferHookProg -->|Check KYC & Transfer Restrictions| WhitelistRegistry[PDA Compliance Registry]
+        end
+
+        YieldDistributor -->|Senior Debt Priority Yield| SeniorVault[Senior Investor Escrow / ATA]
+        YieldDistributor -->|Subordinated Excess Yield| JuniorVault[Junior Equity Escrow / ATA]
+    end
+
+    subgraph Secondary Markets [Permissioned Liquidity & Settlement]
+        SeniorToken <-->|Atomic DvP Swaps| WhitelistedBuyer[Accredited Buyer Wallet]
+        TransferHookProg -.->|Assert Whitelist Status| WhitelistedBuyer
+    end

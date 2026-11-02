@@ -1,0 +1,6 @@
+3/ We built and open-sourced an institutional Credit Securitization engine on @solana:
+✅ Complete Anchor smart contract with Transfer Hook validation
+✅ Senior tranche streaming capital waterfall
+✅ Automated @resend & Slack settlement oracle
+
+Check out the repo and runbook: https://github.com/solana-rwa/credit-supercycle

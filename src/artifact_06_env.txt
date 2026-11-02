@@ -1,0 +1,6 @@
+PORT=8080
+SOLANA_RPC_URL="https://api.mainnet-beta.solana.com"
+PROGRAM_ID="Cred111111111111111111111111111111111111111"
+OPERATOR_SECRET_KEY="[12,43,156,...]"
+RESEND_API_KEY="re_live_98374982374982374"
+SLACK_WEBHOOK_URL="https://api.example.com/webhooks/alerts/placeholder"

@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  rwa-keeper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: solana-credit-supercycle-keeper
+    restart: always
+    environment:
+      - SOLANA_RPC_URL=https://api.devnet.solana.com
+      - PROGRAM_ID=CRDTSync11111111111111111111111111111111111
+      - POOL_ADDRESS=3DugrR41eH1Fp2xQ3tK7eFhJq4kF6pD8yV7L8hW9K1Xk
+      - ALERT_WEBHOOK_URL=https://api.example.com/webhooks/alerts/placeholder
+      - RESEND_API_KEY=re_enterprise_key_here
+      - COMPLIANCE_EMAIL=settlements@institutional-fund.com
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "node", "-e", "process.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

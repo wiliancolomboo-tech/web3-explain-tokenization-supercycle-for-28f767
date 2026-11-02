@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  solcredit-agent:
+    build: .
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
+      - SOLANA_KEYPAIR_PATH=/secrets/id.json
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - DISCORD_SLACK_WEBHOOK_URL=${DISCORD_SLACK_WEBHOOK_URL}
+      - NOTIFICATION_EMAIL=investors@solcredit.io
+    volumes:
+      - ./secrets:/secrets:ro
+    ports:
+      - "8080:8080"

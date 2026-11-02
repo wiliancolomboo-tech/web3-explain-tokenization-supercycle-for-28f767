@@ -1,0 +1,5 @@
+The $3.5 Trillion private credit market is migrating on-chain, but EVM wrappers cannot handle institutional requirements. 
+
+T+3 settlement, opaque quarterly payouts, and manual KYC bottlenecks are over.
+
+Enter the Solana Tokenization Supercycle. Here is how we built institutional-grade credit using Token-2022  🧵👇

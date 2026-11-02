@@ -1,0 +1,30 @@
+version: "3.8"
+
+services:
+  aegis-daemon:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aegis_credit_daemon
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - SOLANA_RPC_URL=${SOLANA_RPC_URL:-https://api.devnet.solana.com}
+      - PROGRAM_ID=AegisCredit111111111111111111111111111111111
+      - ADMIN_KEYPAIR_JSON=${ADMIN_KEYPAIR_JSON}
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - COMPLIANCE_ALERT_EMAIL=compliance-ops@aegiscredit.finance
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "node -e 'process.exit(0)'"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"

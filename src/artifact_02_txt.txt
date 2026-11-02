@@ -1,0 +1,28 @@
++------------------------------------------------------------------------------------------------+
+|                                    ENTERPRISE CLIENT LAYER                                     |
+|  - Web3.js / Anchor TS SDK                                                                     |
+|  - Institutional Custody (Fireblocks / Copper / Squads Multisig)                                |
++----------------------------------------------------+-------------------------------------------+
+                                                     | JSON-RPC over TLS 1.3
+                                                     v
++----------------------------------------------------+-------------------------------------------+
+|                          SOLANA HIGH-PERFORMANCE RUNTIME                                      |
+|                                                                                                |
+|   +---------------------------------------------------------------------------------------+   |
+|   |                       PROGRAM: SovereignYield Credit Engine                           |   |
+|   |  - PDA: Program Config (Admin, Freeze Authority, Oracle Authority)                     |   |
+|   |  - PDA: Facility Vault (Underlying USDC/USDT Capital Pool)                           |   |
+|   |  - PDA: Transfer Hook Compliance Gate (KYC & Sanctions Registry)                       |   |
+|   |  - SPL Token-2022: Transfer Hook + Metadata + Default Account State                    |   |
+|   +---------------------------------------------------------------------------------------+   |
++----------------------------------------------------+-------------------------------------------+
+                                                     | Event Logs & Program Telemetry
+                                                     v
++----------------------------------------------------+-------------------------------------------+
+|                        OFF-CHAIN AGENT & TELEMETRY DAEMON                                      |
+|                                                                                                |
+|  - Pyth / Institutional Banking Oracles (Yield Rate Ingestion)                                |
+|  - Real-Time Transfer Hook Monitoring & Automatic Account Initialization                      |
+|  - Resend API (Transactional Investor Yield Statements & Settlement Confirmations)            |
+|  - Slack Webhook Endpoint (Real-Time Compliance Audit Trail & Capital Calls)                  |
++------------------------------------------------------------------------------------------------+

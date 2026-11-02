@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+  creditcycle-agent:
+    build: .
+    container_name: creditcycle-agent
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - SOLANA_RPC_URL=https://api.devnet.solana.com
+      - PROGRAM_ID=Cred1tSupercyc1e111111111111111111111111111
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - NOTIFICATION_EMAIL=enterprise-ops@solana-credit.internal
+      - WEBHOOK_ALERT_URL=${WEBHOOK_ALERT_URL}
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

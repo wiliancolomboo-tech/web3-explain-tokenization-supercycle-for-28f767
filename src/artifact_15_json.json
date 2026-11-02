@@ -1,0 +1,7 @@
+{
+  "status": "healthy",
+  "currentSlot": 284102941,
+  "rpcLatencyMs": 48,
+  "activeAssetVaults": 14,
+  "monitoredTransferHooks": 14
+}

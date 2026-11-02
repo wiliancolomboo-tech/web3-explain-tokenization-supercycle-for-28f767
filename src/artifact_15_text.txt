@@ -1,0 +1,2 @@
+Extension: Permanent Delegate
+Delegate Pubkey: <POOL_STATE_PDA>

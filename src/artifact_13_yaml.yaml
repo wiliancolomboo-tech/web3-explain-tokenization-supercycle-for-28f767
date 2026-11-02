@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  solana-credit-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: solana-rwa-credit-engine
+    restart: always
+    environment:
+      - SOLANA_RPC_URL=https://api.devnet.solana.com
+      - RESEND_API_KEY=${RESEND_API_KEY:-re_dummy_key}
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-}
+      - AUDIT_EMAIL_RECIPIENT=${AUDIT_EMAIL_RECIPIENT:-devops@enterprise.com}
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "node", "dist/index.js", "telemetry-health"]
+      interval: 60s
+      timeout: 10s
+      retries: 3

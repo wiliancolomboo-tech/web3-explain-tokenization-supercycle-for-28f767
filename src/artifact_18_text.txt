@@ -1,0 +1,6 @@
+sol-pcte Private Credit Waterfall & Compliance Engine
+    ✔ Step 1: Initializes Pool with 800 bps Senior Hurdle and 2000 bps Subordination (412ms)
+    ✔ Step 2: Rejects Unaccredited / Non-KYC Investor from Depositing (185ms)
+    ✔ Step 3: Enforces Junior Subordination Buffer and Executes Multi-Tranche Waterfall (310ms)
+
+  3 passing (1.2s)

@@ -1,0 +1,7 @@
+SOLANA_RPC_URL="https://api.devnet.solana.com"
+PROGRAM_ID="RWA1111111111111111111111111111111111111111"
+AUTHORITY_KEYPAIR_PATH="/root/.config/solana/id.json"
+KYC_AUTHORITY_KEYPAIR_PATH="/root/.config/solana/kyc.json"
+SLACK_WEBHOOK_URL="https://api.example.com/webhooks/alerts/placeholder"
+RESEND_API_KEY="re_1234567890abcdef"
+PORT=8080

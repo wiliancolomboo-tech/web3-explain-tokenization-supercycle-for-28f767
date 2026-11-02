@@ -1,0 +1,8 @@
+Aegis Institutional Private Credit Engine
+    ✔ Initializes the institutional vault with valid tranche bounds (482ms)
+    ✔ Whitelists an accredited investor via on-chain KYC attestation (325ms)
+    ✔ Accepts deposits from accredited investors and mints Senior Tranche shares (520ms)
+    ✔ Fails deposits from non-accredited or unverified addresses (184ms)
+    ✔ Processes keeper NAV adjustments and junior loss deductions (367ms)
+
+  5 passing (2s)

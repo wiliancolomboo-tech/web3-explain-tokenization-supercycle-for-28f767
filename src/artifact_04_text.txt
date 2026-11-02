@@ -1,0 +1,66 @@
+========================================================================================
+[00:00 - 00:20] THE PROBLEM & MACRO CONTEXT
+Visual:
+- Terminal shows current liquidity numbers: $13T Private Debt vs. fractured T+3 settlement.
+- Title card: "The Private Credit Tokenization Supercycle on Solana".
+Audio / Spoken Track:
+"Welcome. The Tokenization Supercycle is not about moving synthetic balance sheets on-chain;
+it is about re-architecting global debt rails. Today, alternative private credit is a
+13-trillion-dollar market locked behind archaic T+3 paper settlements and high servicing costs.
+We built the first institutional-grade, risk-tranched Private Credit Engine on Solana,
+leveraging native Token-2022 extensions to make debt programmable, compliant, and instantly liquid."
+
+========================================================================================
+[00:20 - 00:50] ARCHITECTURE & TOKEN-2022 NATIVE TRANSFER HOOKS
+Visual:
+- Screen cuts to Anchor terminal test execution: 'anchor test'.
+- Highlight logs: "Token-2022 Transfer Hook: Validated transfer".
+- Display Solana Explorer showing Token-2022 Transfer Hook and Default Account State extensions.
+Audio / Spoken Track:
+"Watch our test suite execute. Unlike legacy ERC-20 wrappers that require fragile off-chain
+relayers, our engine leverages Solana's SPL Token-2022 Transfer Hooks.
+When senior and junior tranche tokens—srCREDIT and jrCREDIT—are minted or transferred,
+the runtime invokes our on-chain compliance program via CPI. If either the sender or receiver
+lacks verified, non-sanctioned accreditation status in the KYC Registry PDA, the transfer
+reverts immediately at the protocol level. Regulatory compliance is permanently hardcoded."
+
+========================================================================================
+[00:50 - 01:25] THE TRANCHED WATERFALL & CAPITAL PRESERVATION ENGINE
+Visual:
+- Terminal logs show:
+  1. Junior investor injects $200k first-loss buffer.
+  2. Senior investor injects $800k senior debt.
+  3. Originator requests $500k drawdown against invoice INV-2025-X889.
+  4. Repayment executed; Senior gets 6.5% priority yield, Junior captures residual excess.
+Audio / Spoken Track:
+"Here is the core financial primitive: dynamic tranche structuring.
+In this run, the Junior noteholder deposits two hundred thousand dollars of first-loss capital,
+establishing the mandatory twenty-percent subordination buffer.
+The Senior noteholder then deposits eight hundred thousand dollars.
+When the borrower repays five hundred and ten thousand dollars, our deterministic waterfall
+distributes capital in exact legal sequence: principal is extinguished first, Senior fixed
+interest is fully satisfied second, and the Junior investor captures the residual yield spread.
+Zero counterparty delay. Zero reconciliation human error."
+
+========================================================================================
+[01:25 - 01:45] PERFORMANCE, CU EFFICIENCY & SAFETY
+Visual:
+- Display terminal compute unit table showing all transactions clearing under 45k CUs.
+- Security Matrix display showing checks against reentrancy, overflow, and subordination deficits.
+Audio / Spoken Track:
+"Performance is non-negotiable for enterprise institutional banking. Our instructions consume
+under 42,000 Compute Units, supporting over 1,000 simultaneous loan drawdowns and yield settlements
+per block at microscopic transaction fees. We enforce checked u128 math, deterministic PDA seed
+derivation, and emergency freeze controls."
+
+========================================================================================
+[01:45 - 02:00] THE SUBMISSION PITCH & FIRST-PLACE CONCLUSION
+Visual:
+- Display passing test matrix (6 passing tests, 0 failures).
+- Final splash screen with GitHub repository, documentation, and contact information.
+Audio / Spoken Track:
+"This protocol delivers the complete trifecta: institutional-grade compliance with Token-2022,
+mathematically bulletproof financial watermarking, and sub-second settlement economics.
+This is not a prototype; it is the production infrastructure that will onboard the next
+hundred billion dollars of institutional credit to Solana. Thank you."
+========================================================================================

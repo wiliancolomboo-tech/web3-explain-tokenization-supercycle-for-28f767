@@ -1,0 +1,21 @@
+🧵 1/3
+The institutional Tokenization Supercycle is NOT happening on EVM. 
+
+Why? Because manual wrapping and high-gas rebase functions kill compliance at scale.
+
+Enter @Solana Token Extensions (Token-2022). We just open-sourced the Institutional Private Credit & Receivables Engine on Solana 🚀👇
+
+🧵 2/3
+By leveraging native Token-2022 Transfer Hooks (`spl-transfer-hook-interface`), our engine cryptographically blocks non-accredited or sanctioned transfers AT THE BASE MINT LAYER. 
+
+No wrappers. Zero DEX friction. Instant compliance across every AMM & liquidity pool. 
+⚡ Sub-second settlement
+💸 Micro-streaming yields
+🛡️ Embedded KYC/AML
+
+🧵 3/3
+The repo includes the complete non-truncated Anchor program, full TypeScript orchestration CLI, Docker setup, and enterprise notification pipeline via @resend and Slack.
+
+The multi-trillion-dollar credit market is migrating to Solana. 
+
+Check out the full open-source architecture here: https://github.com/sponsor/solana-rwa-credit-supercycle 🌐🔥

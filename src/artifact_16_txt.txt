@@ -1,0 +1,5 @@
+Why Solana? Sub-second deterministic settlement + Token Extensions (Token-2022).
+
+Our architecture implements native Transfer Hooks for on-chain KYC/AML verification, mathematical fixed-point continuous yield accumulators, and zero-downtime SPV collateral proof auditing. 
+
+No bespoke wrappers. Native runtime compliance. ⚡🦀

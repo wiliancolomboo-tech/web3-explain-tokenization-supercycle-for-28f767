@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  aegis-engine:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aegis_credit_orchestrator
+    restart: always
+    environment:
+      - SOLANA_RPC_URL=https://api.devnet.solana.com
+      - RESEND_API_KEY=${RESEND_API_KEY:-MOCK_RESEND_KEY}
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL:-MOCK_SLACK_WEBHOOK}
+      - NOTIFICATION_SENDER_EMAIL=settlement@aegiscredit.finance
+      - PORT=8080
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3

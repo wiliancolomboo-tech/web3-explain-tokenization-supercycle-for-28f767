@@ -1,0 +1,11 @@
+# Solana Cluster Configuration
+SOLANA_RPC_URL=https://api.devnet.solana.com
+OPERATOR_KEYPAIR=./secrets/operator-key.json
+
+# Enterprise Notification Telemetry
+RESEND_API_KEY=re_123456789_abcdefghijklmnopqrstuvwxyz
+SLACK_WEBHOOK_URL=https://api.example.com/webhooks/alerts/placeholder
+
+# Engine Parameters
+DEFAULT_ADVANCE_RATE_BPS=8500
+MAX_CAPACITY_USD=50000000

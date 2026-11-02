@@ -1,0 +1,7 @@
+ANCHOR_PROVIDER_URL=https://api.devnet.solana.com
+ANCHOR_WALLET=/root/.config/solana/id.json
+SOLANA_RPC_URL=https://api.devnet.solana.com
+SLACK_WEBHOOK_URL=https://api.example.com/webhooks/alerts/placeholder
+RESEND_API_KEY=re_123456789abcdef
+COMPLIANCE_EMAIL=compliance@solcredit-engine.io
+PORT=8080

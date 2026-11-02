@@ -1,206 +1,246 @@
+// File: programs/sol_rwa_credit/src/lib.rs
+
 use anchor_lang::prelude::*;
-use anchor_spl::token_2022::{self, MintTo, Token2022};
-use anchor_spl::token_interface::{Mint, TokenAccount};
+use anchor_spl::token_interface::{self, Mint, TokenAccount, TokenInterface, TransferChecked};
 
-declare_id!("SYE1111111111111111111111111111111111111111");
+declare_id!("Credit1111111111111111111111111111111111111");
 
-pub const BPS_DIVISOR: u64 = 10_000;
-pub const MAX_ORACLE_STALENESS_SECONDS: i64 = 3600;
+pub const SENIOR_TRANCHE_YIELD_BPS: u64 = 850; // 8.50% APR
+pub const BPS_DENOMINATOR: u64 = 10_000;
+pub const SECONDS_PER_YEAR: u64 = 31_536_000;
 
 #[program]
-pub mod sovereign_yield_engine {
+pub mod sol_rwa_credit {
     use super::*;
 
-    /// Initializes a new institutional asset pool with dual tranches.
     pub fn initialize_pool(
         ctx: Context<InitializePool>,
-        pool_bump: u8,
-        senior_yield_bps: u16,
-        reserve_ratio_bps: u16,
+        pool_id: String,
+        principal_target: u64,
+        tenor_seconds: i64,
+        senior_ratio_bps: u64,
     ) -> Result<()> {
-        require!(reserve_ratio_bps <= BPS_DIVISOR as u16, ErrorCode::InvalidRatio);
-        
-        let pool = &mut ctx.accounts.pool_config;
+        require!(pool_id.len() <= 32, CreditError::IdentifierTooLong);
+        require!(senior_ratio_bps <= BPS_DENOMINATOR, CreditError::InvalidRatio);
+        require!(principal_target > 0, CreditError::ZeroAmount);
+        require!(tenor_seconds > 0, CreditError::InvalidTenor);
+
+        let pool = &mut ctx.accounts.pool;
         pool.authority = ctx.accounts.authority.key();
         pool.usdc_mint = ctx.accounts.usdc_mint.key();
         pool.senior_mint = ctx.accounts.senior_mint.key();
         pool.junior_mint = ctx.accounts.junior_mint.key();
-        pool.senior_vault = ctx.accounts.senior_vault.key();
-        pool.junior_vault = ctx.accounts.junior_vault.key();
-        pool.senior_yield_bps = senior_yield_bps;
-        pool.reserve_ratio_bps = reserve_ratio_bps;
-        pool.total_senior_shares = 0;
-        pool.total_junior_shares = 0;
-        pool.pool_bump = pool_bump;
-        pool.last_epoch_timestamp = Clock::get()?.unix_timestamp;
-        pool.paused = false;
+        pool.vault = ctx.accounts.pool_vault.key();
+        pool.pool_id = pool_id;
+        pool.principal_target = principal_target;
+        pool.total_funded = 0;
+        pool.tenor_seconds = tenor_seconds;
+        pool.senior_ratio_bps = senior_ratio_bps;
+        pool.start_timestamp = 0;
+        pool.maturity_timestamp = 0;
+        pool.is_funded = false;
+        pool.is_liquidated = false;
+        pool.repaid_amount = 0;
+        pool.bump = ctx.bumps.pool;
 
         emit!(PoolInitialized {
+            pool_id: pool.pool_id.clone(),
             authority: pool.authority,
-            senior_mint: pool.senior_mint,
-            junior_mint: pool.junior_mint,
-            senior_yield_bps,
+            principal_target,
+            senior_ratio_bps,
         });
 
         Ok(())
     }
 
-    /// Deposits USDC into the Senior Tranche and mints Token-2022 yield tokens.
-    pub fn deposit_senior(ctx: Context<DepositSenior>, amount: u64) -> Result<()> {
-        let pool = &mut ctx.accounts.pool_config;
-        require!(!pool.paused, ErrorCode::PoolPaused);
-        require!(amount > 0, ErrorCode::ZeroDepositAmount);
-
-        // Verify depositor KYC bitfield
-        let kyc_registry = &ctx.accounts.kyc_registry;
-        require!(
-            kyc_registry.is_verified(&ctx.accounts.user.key()),
-            ErrorCode::ComplianceKycFailed
-        );
-
-        // Transfer USDC from user to senior vault
-        anchor_spl::token::transfer(
-            CpiContext::new(
-                ctx.accounts.token_program.to_account_info(),
-                anchor_spl::token::Transfer {
-                    from: ctx.accounts.user_usdc.to_account_info(),
-                    to: ctx.accounts.senior_vault.to_account_info(),
-                    authority: ctx.accounts.user.to_account_info(),
-                },
-            ),
-            amount,
-        )?;
-
-        // Shares issued 1:1 on initial tranche, otherwise derived from NAV
-        let shares_to_mint = amount; 
-
-        // Mint Token-2022 sTBILL using PDA signer seeds
-        let pool_seeds = &[
-            b"pool_config".as_ref(),
-            pool.usdc_mint.as_ref(),
-            &[pool.pool_bump],
-        ];
-        let signer = &[&pool_seeds[..]];
-
-        let cpi_ctx = CpiContext::new_with_signer(
-            ctx.accounts.token_2022_program.to_account_info(),
-            MintTo {
-                mint: ctx.accounts.senior_mint.to_account_info(),
-                to: ctx.accounts.user_senior_token.to_account_info(),
-                authority: ctx.accounts.pool_config.to_account_info(),
-            },
-            signer,
-        );
-
-        token_2022::mint_to(cpi_ctx, shares_to_mint)?;
-
-        pool.total_senior_shares = pool
-            .total_senior_shares
-            .checked_add(shares_to_mint)
-            .ok_or(ErrorCode::MathOverflow)?;
-
-        emit!(SeniorDepositEvent {
-            depositor: ctx.accounts.user.key(),
-            amount,
-            shares_minted: shares_to_mint,
-            timestamp: Clock::get()?.unix_timestamp,
-        });
-
-        Ok(())
-    }
-
-    /// Updates dynamic yield via Token-2022 Interest-Bearing extension.
-    pub fn update_epoch_yield(
-        ctx: Context<UpdateEpochYield>,
-        new_senior_rate_bps: i16,
-        oracle_nav_usdc: u64,
+    pub fn register_investor(
+        ctx: Context<RegisterInvestor>,
+        investor_address: Pubkey,
+        accredited_until: i64,
+        kyc_hash: [u8; 32],
     ) -> Result<()> {
-        let pool = &mut ctx.accounts.pool_config;
         let clock = Clock::get()?;
+        require!(accredited_until > clock.unix_timestamp, CreditError::ExpiredKyc);
 
-        // Staleness Guard
+        let record = &mut ctx.accounts.investor_record;
+        record.investor = investor_address;
+        record.accredited_until = accredited_until;
+        record.is_blacklisted = false;
+        record.kyc_hash = kyc_hash;
+        record.bump = ctx.bumps.investor_record;
+
+        emit!(InvestorRegistered {
+            investor: investor_address,
+            accredited_until,
+        });
+
+        Ok(())
+    }
+
+    pub fn deposit_and_mint(
+        ctx: Context<DepositAndMint>,
+        amount: u64,
+        is_senior: bool,
+    ) -> Result<()> {
+        require!(amount > 0, CreditError::ZeroAmount);
+        let clock = Clock::get()?;
+        let pool = &mut ctx.accounts.pool;
+        let investor_record = &ctx.accounts.investor_record;
+
+        require!(!pool.is_funded, CreditError::PoolAlreadyFunded);
+        require!(!investor_record.is_blacklisted, CreditError::BlacklistedAccount);
         require!(
-            clock.unix_timestamp - pool.last_epoch_timestamp >= 0,
-            ErrorCode::InvalidEpochInterval
+            investor_record.accredited_until > clock.unix_timestamp,
+            CreditError::ExpiredKyc
         );
 
-        // Execute dynamic yield rate adjustment on Token-2022 mint
-        let pool_seeds = &[
-            b"pool_config".as_ref(),
-            pool.usdc_mint.as_ref(),
-            &[pool.pool_bump],
+        // Enforce tranche target capacity
+        let senior_target = (pool.principal_target as u128 * pool.senior_ratio_bps as u128 / BPS_DENOMINATOR as u128) as u64;
+        let junior_target = pool.principal_target.checked_sub(senior_target).ok_or(CreditError::MathUnderflow)?;
+
+        if is_senior {
+            let current_senior_supply = ctx.accounts.senior_mint.supply;
+            require!(
+                current_senior_supply.checked_add(amount).ok_or(CreditError::MathOverflow)? <= senior_target,
+                CreditError::TrancheCapacityExceeded
+            );
+        } else {
+            let current_junior_supply = ctx.accounts.junior_mint.supply;
+            require!(
+                current_junior_supply.checked_add(amount).ok_or(CreditError::MathOverflow)? <= junior_target,
+                CreditError::TrancheCapacityExceeded
+            );
+        }
+
+        // Deposit USDC from investor to pool vault
+        let cpi_accounts = TransferChecked {
+            from: ctx.accounts.investor_usdc.to_account_info(),
+            mint: ctx.accounts.usdc_mint.to_account_info(),
+            to: ctx.accounts.pool_vault.to_account_info(),
+            authority: ctx.accounts.investor.to_account_info(),
+        };
+        let cpi_program = ctx.accounts.token_program.to_account_info();
+        let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
+        token_interface::transfer_checked(cpi_ctx, amount, ctx.accounts.usdc_mint.decimals)?;
+
+        // Mint tranche token back to investor
+        let pool_id_str = pool.pool_id.clone();
+        let seeds = &[
+            b"pool".as_ref(),
+            pool_id_str.as_bytes(),
+            &[pool.bump],
         ];
-        let signer = &[&pool_seeds[..]];
+        let signer = &[&seeds[..]];
 
-        // Update interest bearing extension via Token-2022 CPI
-        let ix = spl_token_2022::extension::interest_bearing_mint::instruction::update_rate(
-            ctx.accounts.token_2022_program.key,
-            ctx.accounts.senior_mint.key,
-            ctx.accounts.pool_config.key,
-            new_senior_rate_bps,
+        if is_senior {
+            let cpi_mint = token_interface::MintTo {
+                mint: ctx.accounts.senior_mint.to_account_info(),
+                to: ctx.accounts.investor_tranche_token.to_account_info(),
+                authority: ctx.accounts.pool.to_account_info(),
+            };
+            token_interface::mint_to(
+                CpiContext::new_with_signer(ctx.accounts.token_program.to_account_info(), cpi_mint, signer),
+                amount,
+            )?;
+        } else {
+            let cpi_mint = token_interface::MintTo {
+                mint: ctx.accounts.junior_mint.to_account_info(),
+                to: ctx.accounts.investor_tranche_token.to_account_info(),
+                authority: ctx.accounts.pool.to_account_info(),
+            };
+            token_interface::mint_to(
+                CpiContext::new_with_signer(ctx.accounts.token_program.to_account_info(), cpi_mint, signer),
+                amount,
+            )?;
+        }
+
+        pool.total_funded = pool.total_funded.checked_add(amount).ok_or(CreditError::MathOverflow)?;
+
+        if pool.total_funded == pool.principal_target {
+            pool.is_funded = true;
+            pool.start_timestamp = clock.unix_timestamp;
+            pool.maturity_timestamp = clock.unix_timestamp.checked_add(pool.tenor_seconds).ok_or(CreditError::MathOverflow)?;
+            emit!(PoolFullyFunded {
+                pool_id: pool.pool_id.clone(),
+                start_timestamp: pool.start_timestamp,
+                maturity_timestamp: pool.maturity_timestamp,
+            });
+        }
+
+        emit!(FundsInvested {
+            pool_id: pool.pool_id.clone(),
+            investor: ctx.accounts.investor.key(),
+            amount,
+            is_senior,
+        });
+
+        Ok(())
+    }
+
+    pub fn process_repayment_waterfall(
+        ctx: Context<ProcessRepaymentWaterfall>,
+        payment_amount: u64,
+    ) -> Result<()> {
+        let clock = Clock::get()?;
+        let pool = &mut ctx.accounts.pool;
+        require!(pool.is_funded, CreditError::PoolNotFunded);
+        require!(payment_amount > 0, CreditError::ZeroAmount);
+
+        // Transfer funds from Originator / Servicer to the Pool Vault
+        let cpi_accounts = TransferChecked {
+            from: ctx.accounts.servicer_usdc.to_account_info(),
+            mint: ctx.accounts.usdc_mint.to_account_info(),
+            to: ctx.accounts.pool_vault.to_account_info(),
+            authority: ctx.accounts.servicer.to_account_info(),
+        };
+        token_interface::transfer_checked(
+            CpiContext::new(ctx.accounts.token_program.to_account_info(), cpi_accounts),
+            payment_amount,
+            ctx.accounts.usdc_mint.decimals,
         )?;
 
-        solana_program::program::invoke_signed(
-            &ix,
-            &[
-                ctx.accounts.senior_mint.to_account_info(),
-                ctx.accounts.pool_config.to_account_info(),
-            ],
-            signer,
-        )?;
+        // Waterfall Math: Senior gets interest + principal first
+        let elapsed = (clock.unix_timestamp - pool.start_timestamp).max(0) as u64;
+        let senior_supply = ctx.accounts.senior_mint.supply;
+        
+        // senior interest = senior_supply * SENIOR_TRANCHE_YIELD_BPS * elapsed / (SECONDS_PER_YEAR * BPS_DENOMINATOR)
+        let senior_interest = (senior_supply as u128)
+            .checked_mul(SENIOR_TRANCHE_YIELD_BPS as u128).unwrap()
+            .checked_mul(elapsed as u128).unwrap()
+            .checked_div((SECONDS_PER_YEAR as u128) * (BPS_DENOMINATOR as u128))
+            .unwrap() as u64;
 
-        pool.last_epoch_timestamp = clock.unix_timestamp;
-        pool.senior_yield_bps = new_senior_rate_bps as u16;
+        let senior_obligations = senior_supply.checked_add(senior_interest).ok_or(CreditError::MathOverflow)?;
+        
+        let senior_payout = std::cmp::min(payment_amount, senior_obligations);
+        let junior_payout = payment_amount.saturating_sub(senior_payout);
 
-        emit!(EpochYieldUpdated {
-            new_yield_bps: new_senior_rate_bps,
-            oracle_nav_usdc,
+        pool.repaid_amount = pool.repaid_amount.checked_add(payment_amount).ok_or(CreditError::MathOverflow)?;
+
+        emit!(RepaymentProcessed {
+            pool_id: pool.pool_id.clone(),
+            total_repayment: payment_amount,
+            senior_portion: senior_payout,
+            junior_portion: junior_payout,
             timestamp: clock.unix_timestamp,
         });
 
         Ok(())
     }
-
-    /// Transfer Hook Core Endpoint.
-    /// Intercepts transfers of the sTBILL token to verify both sender and recipient on-chain.
-    pub fn execute_transfer_hook(
-        ctx: Context<ExecuteTransferHook>,
-        amount: u64,
-    ) -> Result<()> {
-        let registry = &ctx.accounts.kyc_registry;
-
-        // Extract owner pubkeys from TokenAccounts
-        let source_owner = ctx.accounts.source_token_account.owner;
-        let destination_owner = ctx.accounts.destination_token_account.owner;
-
-        // Strict Compliance Validation: Both parties must have unexpired KYC and not be blacklisted
-        require!(
-            registry.is_verified(&source_owner),
-            ErrorCode::SourceNotKYCApproved
-        );
-        require!(
-            registry.is_verified(&destination_owner),
-            ErrorCode::DestinationNotKYCApproved
-        );
-
-        msg!(
-            "Transfer Hook Verified: {} tokens transferred from {} to {}",
-            amount,
-            source_owner,
-            destination_owner
-        );
-
-        Ok(())
-    }
 }
 
-// -----------------------------------------------------------------------------
-// ACCOUNT STRUCTURES & CONTEXTS
-// -----------------------------------------------------------------------------
-
 #[derive(Accounts)]
-#[instruction(pool_bump: u8)]
+#[instruction(pool_id: String)]
 pub struct InitializePool<'info> {
+    #[account(
+        init,
+        payer = authority,
+        space = 8 + CreditPool::LEN,
+        seeds = [b"pool", pool_id.as_bytes()],
+        bump
+    )]
+    pub pool: Box<Account<'info, CreditPool>>,
+
     #[account(mut)]
     pub authority: Signer<'info>,
 
@@ -209,211 +249,260 @@ pub struct InitializePool<'info> {
     #[account(
         init,
         payer = authority,
-        space = 8 + PoolConfig::INIT_SPACE,
-        seeds = [b"pool_config", usdc_mint.key().as_ref()],
+        mint::decimals = 6,
+        mint::authority = pool,
+        seeds = [b"senior", pool_id.as_bytes()],
         bump
     )]
-    pub pool_config: Box<Account<'info, PoolConfig>>,
-
-    #[account(
-        init,
-        payer = authority,
-        seeds = [b"senior_vault", pool_config.key().as_ref()],
-        bump,
-        token::mint = usdc_mint,
-        token::authority = pool_config,
-    )]
-    pub senior_vault: Box<InterfaceAccount<'info, TokenAccount>>,
-
-    #[account(
-        init,
-        payer = authority,
-        seeds = [b"junior_vault", pool_config.key().as_ref()],
-        bump,
-        token::mint = usdc_mint,
-        token::authority = pool_config,
-    )]
-    pub junior_vault: Box<InterfaceAccount<'info, TokenAccount>>,
-
-    /// Token-2022 Senior Mint initialized outside or via CPI with interest extension
-    #[account(mut)]
     pub senior_mint: Box<InterfaceAccount<'info, Mint>>,
 
-    #[account(mut)]
+    #[account(
+        init,
+        payer = authority,
+        mint::decimals = 6,
+        mint::authority = pool,
+        seeds = [b"junior", pool_id.as_bytes()],
+        bump
+    )]
     pub junior_mint: Box<InterfaceAccount<'info, Mint>>,
 
-    pub token_program: Program<'info, anchor_spl::token::Token>,
-    pub token_2022_program: Program<'info, Token2022>,
+    #[account(
+        init,
+        payer = authority,
+        token::mint = usdc_mint,
+        token::authority = pool,
+        seeds = [b"vault", pool_id.as_bytes()],
+        bump
+    )]
+    pub pool_vault: Box<InterfaceAccount<'info, TokenAccount>>,
+
     pub system_program: Program<'info, System>,
+    pub token_program: Interface<'info, TokenInterface>,
     pub rent: Sysvar<'info, Rent>,
 }
 
 #[derive(Accounts)]
-pub struct DepositSenior<'info> {
+pub struct RegisterInvestor<'info> {
     #[account(mut)]
-    pub user: Signer<'info>,
+    pub authority: Signer<'info>,
 
     #[account(
-        mut,
-        seeds = [b"pool_config", pool_config.usdc_mint.as_ref()],
-        bump = pool_config.pool_bump,
+        init_if_needed,
+        payer = authority,
+        space = 8 + InvestorRecord::LEN,
+        seeds = [b"investor", investor_address.as_ref()],
+        bump
     )]
-    pub pool_config: Box<Account<'info, PoolConfig>>,
+    pub investor_record: Account<'info, InvestorRecord>,
 
-    #[account(
-        seeds = [b"kyc_registry", pool_config.authority.as_ref()],
-        bump = kyc_registry.bump
-    )]
-    pub kyc_registry: Box<Account<'info, KycRegistry>>,
+    /// CHECK: Target investor to verify
+    pub investor_address: AccountInfo<'info>,
 
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct DepositAndMint<'info> {
     #[account(mut)]
-    pub user_usdc: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub investor: Signer<'info>,
 
     #[account(
         mut,
-        constraint = senior_vault.key() == pool_config.senior_vault @ ErrorCode::InvalidVault
+        seeds = [b"pool", pool.pool_id.as_bytes()],
+        bump = pool.bump
     )]
-    pub senior_vault: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub pool: Box<Account<'info, CreditPool>>,
+
+    #[account(
+        seeds = [b"investor", investor.key().as_ref()],
+        bump = investor_record.bump,
+        constraint = investor_record.investor == investor.key() @ CreditError::UnauthorizedInvestor
+    )]
+    pub investor_record: Account<'info, InvestorRecord>,
+
+    pub usdc_mint: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(
         mut,
-        constraint = senior_mint.key() == pool_config.senior_mint @ ErrorCode::InvalidMint
+        seeds = [b"senior", pool.pool_id.as_bytes()],
+        bump
+    )]
+    pub senior_mint: Box<InterfaceAccount<'info, Mint>>,
+
+    #[account(
+        mut,
+        seeds = [b"junior", pool.pool_id.as_bytes()],
+        bump
+    )]
+    pub junior_mint: Box<InterfaceAccount<'info, Mint>>,
+
+    #[account(
+        mut,
+        constraint = investor_usdc.mint == usdc_mint.key(),
+        constraint = investor_usdc.owner == investor.key()
+    )]
+    pub investor_usdc: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    #[account(
+        mut,
+        seeds = [b"vault", pool.pool_id.as_bytes()],
+        bump
+    )]
+    pub pool_vault: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    #[account(
+        mut,
+        constraint = investor_tranche_token.owner == investor.key()
+    )]
+    pub investor_tranche_token: Box<InterfaceAccount<'info, TokenAccount>>,
+
+    pub token_program: Interface<'info, TokenInterface>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct ProcessRepaymentWaterfall<'info> {
+    #[account(mut)]
+    pub servicer: Signer<'info>,
+
+    #[account(
+        mut,
+        seeds = [b"pool", pool.pool_id.as_bytes()],
+        bump = pool.bump,
+        has_one = vault,
+        has_one = senior_mint
+    )]
+    pub pool: Box<Account<'info, CreditPool>>,
+
+    pub usdc_mint: Box<InterfaceAccount<'info, Mint>>,
+
+    #[account(
+        mut,
+        seeds = [b"senior", pool.pool_id.as_bytes()],
+        bump
     )]
     pub senior_mint: Box<InterfaceAccount<'info, Mint>>,
 
     #[account(mut)]
-    pub user_senior_token: Box<InterfaceAccount<'info, TokenAccount>>,
-
-    pub token_program: Program<'info, anchor_spl::token::Token>,
-    pub token_2022_program: Program<'info, Token2022>,
-}
-
-#[derive(Accounts)]
-pub struct UpdateEpochYield<'info> {
-    #[account(
-        constraint = keeper.key() == pool_config.authority @ ErrorCode::UnauthorizedKeeper
-    )]
-    pub keeper: Signer<'info>,
+    pub pool_vault: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         mut,
-        seeds = [b"pool_config", pool_config.usdc_mint.as_ref()],
-        bump = pool_config.pool_bump,
+        constraint = servicer_usdc.mint == usdc_mint.key(),
+        constraint = servicer_usdc.owner == servicer.key()
     )]
-    pub pool_config: Box<Account<'info, PoolConfig>>,
+    pub servicer_usdc: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    #[account(
-        mut,
-        constraint = senior_mint.key() == pool_config.senior_mint @ ErrorCode::InvalidMint
-    )]
-    pub senior_mint: Box<InterfaceAccount<'info, Mint>>,
-
-    pub token_2022_program: Program<'info, Token2022>,
+    pub vault: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub token_program: Interface<'info, TokenInterface>,
 }
-
-#[derive(Accounts)]
-pub struct ExecuteTransferHook<'info> {
-    #[account(
-        seeds = [b"kyc_registry", kyc_registry.authority.as_ref()],
-        bump = kyc_registry.bump
-    )]
-    pub kyc_registry: Account<'info, KycRegistry>,
-
-    pub source_token_account: InterfaceAccount<'info, TokenAccount>,
-    pub destination_token_account: InterfaceAccount<'info, TokenAccount>,
-}
-
-// -----------------------------------------------------------------------------
-// STATE DECLARATIONS
-// -----------------------------------------------------------------------------
 
 #[account]
-#[derive(InitSpace)]
-pub struct PoolConfig {
+pub struct CreditPool {
     pub authority: Pubkey,
     pub usdc_mint: Pubkey,
     pub senior_mint: Pubkey,
     pub junior_mint: Pubkey,
-    pub senior_vault: Pubkey,
-    pub junior_vault: Pubkey,
-    pub senior_yield_bps: u16,
-    pub reserve_ratio_bps: u16,
-    pub total_senior_shares: u64,
-    pub total_junior_shares: u64,
-    pub last_epoch_timestamp: i64,
-    pub pool_bump: u8,
-    pub paused: bool,
+    pub vault: Pubkey,
+    pub pool_id: String,
+    pub principal_target: u64,
+    pub total_funded: u64,
+    pub tenor_seconds: i64,
+    pub senior_ratio_bps: u64,
+    pub start_timestamp: i64,
+    pub maturity_timestamp: i64,
+    pub is_funded: bool,
+    pub is_liquidated: bool,
+    pub repaid_amount: u64,
+    pub bump: u8,
+}
+
+impl CreditPool {
+    pub const LEN: usize = 32 + 32 + 32 + 32 + 32 + (4 + 32) + 8 + 8 + 8 + 8 + 8 + 8 + 1 + 1 + 8 + 1;
 }
 
 #[account]
-pub struct KycRegistry {
-    pub authority: Pubkey,
+pub struct InvestorRecord {
+    pub investor: Pubkey,
+    pub accredited_until: i64,
+    pub is_blacklisted: bool,
+    pub kyc_hash: [u8; 32],
     pub bump: u8,
-    // Dynamic BitMap / Verified Investor Array (Fixed sizing for PoC; Prod uses Merkle verification)
-    pub approved_identities: [Pubkey; 64],
-    pub is_blacklisted: [bool; 64],
 }
 
-impl KycRegistry {
-    pub fn is_verified(&self, account: &Pubkey) -> bool {
-        for (idx, approved) in self.approved_identities.iter().enumerate() {
-            if approved == account {
-                return !self.is_blacklisted[idx];
-            }
-        }
-        false
+impl InvestorRecord {
+    pub const LEN: usize = 32 + 8 + 1 + 32 + 1;
+}
+
+#[event]
+pub mod events {
+    use super::*;
+
+    #[event]
+    pub struct PoolInitialized {
+        pub pool_id: String,
+        pub authority: Pubkey,
+        pub principal_target: u64,
+        pub senior_ratio_bps: u64,
+    }
+
+    #[event]
+    pub struct InvestorRegistered {
+        pub investor: Pubkey,
+        pub accredited_until: i64,
+    }
+
+    #[event]
+    pub struct FundsInvested {
+        pub pool_id: String,
+        pub investor: Pubkey,
+        pub amount: u64,
+        pub is_senior: bool,
+    }
+
+    #[event]
+    pub struct PoolFullyFunded {
+        pub pool_id: String,
+        pub start_timestamp: i64,
+        pub maturity_timestamp: i64,
+    }
+
+    #[event]
+    pub struct RepaymentProcessed {
+        pub pool_id: String,
+        pub total_repayment: u64,
+        pub senior_portion: u64,
+        pub junior_portion: u64,
+        pub timestamp: i64,
     }
 }
 
-// -----------------------------------------------------------------------------
-// EVENTS & ERRORS
-// -----------------------------------------------------------------------------
-
-#[event]
-pub struct PoolInitialized {
-    pub authority: Pubkey,
-    pub senior_mint: Pubkey,
-    pub junior_mint: Pubkey,
-    pub senior_yield_bps: u16,
-}
-
-#[event]
-pub struct SeniorDepositEvent {
-    pub depositor: Pubkey,
-    pub amount: u64,
-    pub shares_minted: u64,
-    pub timestamp: i64,
-}
-
-#[event]
-pub struct EpochYieldUpdated {
-    pub new_yield_bps: i16,
-    pub oracle_nav_usdc: u64,
-    pub timestamp: i64,
-}
+pub use events::*;
 
 #[error_code]
-pub enum ErrorCode {
-    #[msg("Operation forbidden: System is currently paused")]
-    PoolPaused,
-    #[msg("Zero deposit value supplied")]
-    ZeroDepositAmount,
-    #[msg("Compliance validation failed: User not on KYC allowlist")]
-    ComplianceKycFailed,
-    #[msg("Arithmetic overflow detected in yield or share calculation")]
-    MathOverflow,
-    #[msg("Epoch step triggered before minimum threshold time")]
-    InvalidEpochInterval,
-    #[msg("Transfer Hook rejected: Source wallet not approved")]
-    SourceNotKYCApproved,
-    #[msg("Transfer Hook rejected: Destination wallet not approved")]
-    DestinationNotKYCApproved,
-    #[msg("Invalid authority signature for keeper operations")]
-    UnauthorizedKeeper,
-    #[msg("Passed vault account does not match canonical PoolConfig state")]
-    InvalidVault,
-    #[msg("Passed mint account does not match canonical PoolConfig state")]
-    InvalidMint,
-    #[msg("Reserve ratio exceeds 10,000 basis points")]
+pub enum CreditError {
+    #[msg("Pool identifier string exceeds maximum length of 32 bytes.")]
+    IdentifierTooLong,
+    #[msg("Senior ratio basis points cannot exceed 10,000.")]
     InvalidRatio,
+    #[msg("Requested operation amount must be strictly greater than zero.")]
+    ZeroAmount,
+    #[msg("Credit tenor must be greater than zero seconds.")]
+    InvalidTenor,
+    #[msg("Supplied KYC accreditation timestamp is in the past.")]
+    ExpiredKyc,
+    #[msg("The credit pool has already satisfied its funding target.")]
+    PoolAlreadyFunded,
+    #[msg("Investor account has been placed on the sanctions or blacklist.")]
+    BlacklistedAccount,
+    #[msg("Investor account record does not match transaction signer.")]
+    UnauthorizedInvestor,
+    #[msg("Tranche allocation limit would be exceeded by this deposit.")]
+    TrancheCapacityExceeded,
+    #[msg("Credit pool is not fully funded yet.")]
+    PoolNotFunded,
+    #[msg("Arithmetic overflow encountered during calculation.")]
+    MathOverflow,
+    #[msg("Arithmetic underflow encountered during calculation.")]
+    MathUnderflow,
 }

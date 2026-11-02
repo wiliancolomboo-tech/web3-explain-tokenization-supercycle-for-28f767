@@ -1,0 +1,11 @@
+client/
+├── package.json
+├── tsconfig.json
+├── src/
+│   ├── config.ts
+│   ├── services/
+│   │   ├── complianceService.ts
+│   │   ├── notificationService.ts
+│   │   └── solanaClient.ts
+│   ├── cli.ts
+│   └── index.ts

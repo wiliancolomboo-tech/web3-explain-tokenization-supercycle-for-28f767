@@ -1,0 +1,1 @@
+anchor run execute-clawback -- --investor <WALLET> --amount <UNITS> --proof <LEGAL_PDF_SHA256>

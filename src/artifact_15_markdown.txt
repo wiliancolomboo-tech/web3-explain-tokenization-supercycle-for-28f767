@@ -1,0 +1,21 @@
+1/3
+The $40 Trillion Institutional Tokenization Supercycle isn't happening on private bank chains or congested EVMs. It is being built right now on @Solana.
+
+Here is why Solana Token-2022 is the endgame for institutional Private Credit, Treasuries, & Structured Debt 🧵👇
+
+2/3
+Traditional markets suffer from slow T+2 clearing, manual wire dividends, & non-standard compliance wrappers. 
+
+Our open-source solution uses native Solana SPL Token-2022 Transfer Hooks to enforce sub-second, deterministic cryptographic KYC/AML checks on every transaction ⚡
+
+- Sub-cent tx fees ($0.00025)
+- Automated Resend/Slack audit streams
+- Zero unsafe wrappers
+- Composable institutional liquidity
+
+3/3
+We've open-sourced an institutional-grade, turnkey RWA Debt Issuance engine complete with Anchor smart contracts, automated compliance verification, test suites, & Docker operations! 🛠️
+
+Check out the full architecture & code on GitHub: https://github.com/institutional-rwa/solana-supercycle-engine
+
+Built for the @Solana Tokenization Supercycle 🚀

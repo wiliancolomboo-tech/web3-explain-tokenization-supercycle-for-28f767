@@ -1,0 +1,18 @@
+🧵 1/3
+The $16 Trillion RWA Supercycle is not coming to EVM. It's happening on @solana. 
+
+Why? Because traditional finance cannot tolerate T+2 clearing, manual sanctions screening, and fractured liquidity. 
+
+Introducing Aegis-RWA: The Institutional Private Credit Engine powered by Token-2022. ⚡️👇
+
+🧵 2/3
+Aegis leverages native Token-2022 Transfer Hooks to enforce KYC/AML & OFAC sanctions checks directly at the base runtime level.
+
+No wrapped tokens. No permissioned dark-pool silos. If an investor isn't accredited, the transaction physically reverts on-chain in 400ms. 🛡️
+
+🧵 3/3
+With deterministic sub-cent transaction costs, dynamic NAV recalculations stream into investor wallets in real-time, backed by automated enterprise reporting via Slack & @resend.
+
+Read our complete open-source blueprint & architecture submission here: [LINK]
+
+#Solana #RWA #Tokenization #DeFi #FinTech

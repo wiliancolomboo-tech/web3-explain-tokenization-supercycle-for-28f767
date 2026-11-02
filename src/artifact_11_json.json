@@ -1,0 +1,9 @@
+{
+  "status": "HEALTHY",
+  "programId": "RWA1111111111111111111111111111111111111111",
+  "syncedSlot": 289410123,
+  "telemetry": {
+    "slackAlerts": "CONNECTED",
+    "resendMailer": "ACTIVE"
+  }
+}

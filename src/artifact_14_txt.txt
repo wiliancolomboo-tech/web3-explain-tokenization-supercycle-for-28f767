@@ -1,0 +1,6 @@
++------------------+--------------------------------------------------------+
+| Health Endpoint  | GET /healthz -> Returns 200 OK & Current Slot Lag      |
+| Metrics Endpoint | GET /metrics -> Active Regulated Token Mints, Dispatches|
+| Primary Alert    | Automated Slack push on non-accredited transfer failure|
+| Recovery SLA     | < 60s hot failover via secondary RPC WebSocket         |
++------------------+--------------------------------------------------------+

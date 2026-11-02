@@ -1,0 +1,23 @@
+version: "3.8"
+
+services:
+  solpv-orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: solpv-orchestrator-prod
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - SOLANA_RPC_URL=${SOLANA_RPC_URL:-https://api.mainnet-beta.solana.com}
+      - SOLANA_PRIVATE_KEY=${SOLANA_PRIVATE_KEY}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
+      - PORT=8080
+    ports:
+      - "8080:8080"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"

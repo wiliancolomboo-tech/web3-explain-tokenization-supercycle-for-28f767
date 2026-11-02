@@ -1,0 +1,6 @@
+SOLANA_RPC_URL=https://api.devnet.solana.com
+PROGRAM_ID=CRDTVkZ6Z6g2cRnmrXy1p7zPj4tF4zM2XyqZ7rT4yU8w
+RESEND_API_KEY=re_live_sec_prod_credential_88329
+OPS_SLACK_WEBHOOK=https://api.example.com/webhooks/alerts/placeholder
+OPERATIONS_EMAIL=rwa-settlement-desk@institutional-fund.com
+PORT=8080

@@ -1,0 +1,18 @@
+1/ The $2.1 Trillion RWA Tokenization Supercycle isn't happening on slow, expensive legacy blockchains.
+
+It is happening natively on @solana.
+
+Here is why Private Credit and Yield-Bearing Receivables are migrating to Token Extensions (Token-2022) 🧵👇
+
+2/ Legacy tokenization suffered from $50 gas spikes and brittle compliance wrappers that broke composability.
+
+Enter Solaris on @solana:
+⚡ Sub-second finality with deterministic <$0.0005 fees
+🔒 Transfer Hook compliance enforcing KYC/AML directly in the mint
+📈 Native interest-bearing curves streaming programmatic yield 24/7/365
+
+3/ Built with @coral_xyz Anchor + Token-2022, Solaris fractionalizes corporate debt into secure, liquid tranches.
+
+Institutional compliance is no longer a centralized hurdle—it’s an immutable, high-speed on-chain guarantee.
+
+Full architecture & code: https://github.com/solaris-credit/protocol 🚀

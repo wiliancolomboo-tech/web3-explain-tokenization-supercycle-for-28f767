@@ -1,0 +1,18 @@
+### Deterministic QA Verification Matrix
+| Test ID | Vector Tested | Expected Result | Assertion Status |
+| :--- | :--- | :--- | :--- |
+| **QA-01** | `initialize_pool` state verification | PDA seeds match, 12% yield recorded, active | **PASS (100%)** |
+| **QA-02** | `set_investor_kyc` authorization | Non-admin fails, accreditation bit persisted | **PASS (100%)** |
+| **QA-03** | `deposit_capital` standard flow | 1:1 Share minting, collateral locked in PDA | **PASS (100%)** |
+| **QA-04** | Sybil / Unwhitelisted investor check | Zero account resolution prevents minting | **PASS (100%)** |
+| **QA-05** | Face-value saturation boundary | Hard cap strictly enforced at 100,000,000 units | **PASS (100%)** |
+| **QA-06** | Transfer-Hook compliance gate | Direct SPL transfers without recipient KYC revert | **PASS (100%)** |
+
+---
+
+# 6. Sponsor Handover & Turnkey Operations
+
+## Automated Deployment Scripts
+Deploy the entire CreditStream infrastructure to Solana devnet or mainnet with a single shell script.
+
+### `scripts/deploy.sh`

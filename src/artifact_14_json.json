@@ -1,0 +1,8 @@
+// GET /healthz
+{
+  "status": "HEALTHY",
+  "programId": "Hook111111111111111111111111111111111111111",
+  "connectedSlot": 312849021,
+  "resendRelayActive": true,
+  "slackWebhookActive": true
+}

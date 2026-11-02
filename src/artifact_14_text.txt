@@ -1,0 +1,6 @@
+Built with @anchorlang, complete Token-2022 integration, and enterprise telemetry hooks via @resend & Slack.
+
+Zero-downtime, fully audited deterministic logic ready for institutional capital.
+
+Explore our open-source codebase and live architecture here:
+github.com/solcredit/solcredit-supercycle 🚀

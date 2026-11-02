@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  aegis-telemetry-engine:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aegis_credit_daemon
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - SOLANA_RPC_URL=https://api.devnet.solana.com
+      - PROGRAM_ID=AegisCredit111111111111111111111111111111111
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - ALERT_EMAIL=institutional-ops@firm.com
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
+    ports:
+      - "8080:8080"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"

@@ -1,0 +1,12 @@
+# Solana Network Configuration
+SOLANA_RPC_URL=https://api.devnet.solana.com
+PROGRAM_ID=Credit11111111111111111111111111111111111111
+
+# Enterprise Integrations
+RESEND_API_KEY=re_1234567890abcdef
+SLACK_WEBHOOK_URL=https://api.example.com/webhooks/alerts/placeholder
+COMPLIANCE_OFFICER_EMAIL=risk-oversight@institutional-fund.com
+
+# Server Health Telemetry
+PORT=8080
+METRICS_PORT=9090

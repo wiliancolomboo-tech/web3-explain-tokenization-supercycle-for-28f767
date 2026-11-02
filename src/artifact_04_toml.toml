@@ -1,0 +1,12 @@
+[workspace]
+members = [
+    "programs/invoice_credit_engine",
+    "programs/compliance_transfer_hook"
+]
+resolver = "2"
+
+[profile.release]
+overflow-checks = true
+lto = "fat"
+codegen-units = 1
+opt-level = 3

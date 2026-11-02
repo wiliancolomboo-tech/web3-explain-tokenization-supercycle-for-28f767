@@ -1,20 +1,6 @@
-+----------------------------------------------------------------------------------------------------+
-|                                    SECURITY ATTACK VECTORS                                         |
-+----------------------------------------------------------------------------------------------------+
-| THREAT VECTORS        | SEVERITY | MITIGATION STRATEGY IMPLEMENTED IN CODE                         |
-+-----------------------+----------+-----------------------------------------------------------------+
-| Transfer Hook Bypass  | CRITICAL | Hardcoded Token-2022 extension validation; transfer fails       |
-|                       |          | automatically if hook account isn't present in account infos.   |
-+-----------------------+----------+-----------------------------------------------------------------+
-| Phantom NAV Reprice   | HIGH     | Maximum delta rate clamp (max 50 bps change per epoch) and     |
-|                       |          | timestamp staleness checks (`MAX_ORACLE_STALENESS_SECONDS`).    |
-+-----------------------+----------+-----------------------------------------------------------------+
-| Reentrancy via CPI    | HIGH     | State updates precede all token mint/transfer CPIs; follow      |
-|                       |          | Check-Effects-Interactions architecture strictly.               |
-+-----------------------+----------+-----------------------------------------------------------------+
-| PDA Seed Collision    | MEDIUM   | Canonical canonicalization via explicit seed derivation using   |
-|                       |          | deterministic prefixes (`b"pool_config"`, `usdc_mint.key()`).  |
-+-----------------------+----------+-----------------------------------------------------------------+
-| Senior Pool Drain     | CRITICAL | Subordinated Junior loss-absorption layer; Senior redemptions   |
-| (Bank Run)            |          | gatekeeper-throttled via epoch-batched queues.                  |
-+----------------------------------------------------------------------------------------------------+
+client/
+├── package.json
+├── tsconfig.json
+└── src/
+    ├── agent.ts
+    └── enterprise_notifier.ts

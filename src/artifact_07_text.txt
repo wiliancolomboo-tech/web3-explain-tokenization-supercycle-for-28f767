@@ -1,0 +1,8 @@
+Tokenization Supercycle: Institutional Private Credit
+    ✔ 1. Initializes Credit Pool with Senior/Junior Tranches (421ms)
+    ✔ 2. Attests KYC/AML for Class A and Class B Institutional Investors (189ms)
+    ✔ 3. Executes Senior and Junior Capital Injections with On-chain Minting (512ms)
+    ✔ 4. Borrower executes capital drawdown (204ms)
+    ✔ 5. Borrower repays principal + interest, updating tranche yield indexes (289ms)
+
+  5 passing (2s)

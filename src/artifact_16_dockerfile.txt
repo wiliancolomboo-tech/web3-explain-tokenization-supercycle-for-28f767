@@ -1,0 +1,24 @@
+FROM node:20-slim AS builder
+
+WORKDIR /usr/src/app
+
+# Install rust & Solana toolsuite for local verification
+RUN apt-get update && apt-get install -y \
+    curl \
+    build-essential \
+    pkg-config \
+    libudev-dev \
+    llvm \
+    clang \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY client/package*.json ./
+RUN npm install
+
+COPY client/ ./
+RUN npm run build || true
+
+EXPOSE 8080
+
+CMD ["npm", "start"]

@@ -1,0 +1,53 @@
+flowchart TD
+    subgraph Institutional_Offchain [TradFi Custody & Banking Layer]
+        BANK[Institutional Custodian Bank / Fedwire]
+        AUDIT[Independent Auditor Proof-of-Reserve]
+        KYC_PROV[Enterprise Identity Provider / SumSub]
+    end
+
+    subgraph Chronos_Daemon [Chronos Enterprise Sync Daemon]
+        ORACLE_CLI[Chronos Rust/TS Automation Worker]
+        RESEND_GATEWAY[Resend API: Email Delivery]
+        SLACK_GATEWAY[Slack/Discord Compliance Webhook]
+    end
+
+    subgraph Solana_L1 [Solana Blockchain - Token-2022 Engine]
+        RWA_PROGRAM[Chronos RWA Anchor Program]
+        STATE_VAULT[(Chronos Global State & Reserve PDA)]
+        KYC_REGISTRY[(Program Whitelist Registry PDA)]
+        MINT_RWA[cTBILL Token-2022 Mint\n* Default Account State: Frozen\n* Transfer Hook Enabled\n* Interest-Bearing Config]
+        TRANSFER_HOOK[Transfer Hook Program\n* Deterministic KYC Verification]
+    end
+
+    subgraph Enterprise_Investor [Institutional Investor / Secondary Market]
+        INVESTOR[Whitelisted Asset Manager / LP]
+        RECIPIENT[Approved Counterparty]
+    end
+
+    %% Ingestion & Verification
+    BANK -->|Balance Attestation API| ORACLE_CLI
+    AUDIT -->|Signed PoR Hash| ORACLE_CLI
+    KYC_PROV -->|Verified Credential| ORACLE_CLI
+
+    %% On-Chain Sync
+    ORACLE_CLI -->|ix: update_proof_of_reserve| RWA_PROGRAM
+    ORACLE_CLI -->|ix: authorize_investor| RWA_PROGRAM
+    RWA_PROGRAM -->|Commit State| STATE_VAULT
+    RWA_PROGRAM -->|Set Whitelist Status| KYC_REGISTRY
+
+    %% Investor Mint Loop
+    INVESTOR -->|Deposit USDC / Fiat Wire| BANK
+    ORACLE_CLI -->|ix: mint_rwa_shares| RWA_PROGRAM
+    RWA_PROGRAM -->|Issue cTBILL| MINT_RWA
+    MINT_RWA -->|Deposit| INVESTOR
+
+    %% Secondary Transfer Hook Loop
+    INVESTOR -->|spl-token transfer| RECIPIENT
+    MINT_RWA -.->|CPI: execute_transfer_hook| TRANSFER_HOOK
+    TRANSFER_HOOK -->|Query Whitelist| KYC_REGISTRY
+    TRANSFER_HOOK -- Reject / Approve --> MINT_RWA
+
+    %% Telemetry & Alerting
+    ORACLE_CLI -->|Push Execution Telemetry| SLACK_GATEWAY
+    ORACLE_CLI -->|Send Audit PDF / Receipt| RESEND_GATEWAY
+    RESEND_GATEWAY -->|Delivery| INVESTOR

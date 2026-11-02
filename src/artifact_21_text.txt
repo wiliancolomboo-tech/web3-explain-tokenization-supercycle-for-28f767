@@ -1,0 +1,6 @@
+2/ Why not EVM L2s? Because institutional RWAs demand deterministic compliance at the native ledger level.
+
+Enter Solana Token-2022:
+⚡ Transfer Hooks enforce Reg D/S KYC/AML on EVERY secondary swap
+⚡ 400ms finality settles loan drawdowns in 1 slot
+⚡ Real-time yield streaming

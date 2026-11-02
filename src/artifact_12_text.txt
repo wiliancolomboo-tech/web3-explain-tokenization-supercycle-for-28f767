@@ -1,0 +1,8 @@
+client/
+├── package.json
+├── tsconfig.json
+├── .env.example
+└── src/
+    ├── enterprise-alerts.ts
+    ├── rwa-client.ts
+    └── cli.ts

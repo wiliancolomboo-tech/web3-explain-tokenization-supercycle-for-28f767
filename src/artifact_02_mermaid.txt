@@ -1,50 +1,42 @@
 flowchart TD
-    subgraph Institutional_Participants["Institutional Participants"]
-        LP_Senior["Senior Tranche Investor (Accredited)"]
-        LP_Junior["Junior Tranche Investor (First-Loss Capital)"]
-        Issuer["Regulated Asset Issuer / Broker-Dealer"]
-        Keeper["Automated Crank / Off-Chain Settlement Keeper"]
+    subgraph Enterprise_Layer["Enterprise & Off-Chain Ingestion Layer"]
+        ERP["Corporate ERP / Accounts Receivable<br/>(SAP / Stripe / NetSuite)"]
+        Issuer["Originator / Factoring House"]
+        Oracle["Attestation Signer Node<br/>(ECDSA Hardware Enclave)"]
+        Notifier["Notification Engine<br/>(Resend / Discord / Slack API)"]
     end
 
-    subgraph Solana_Runtime["Solana Sealevel Runtime (Local Fee Market)"]
-        subgraph Program_State["Sovereign Yield Core Program (SYE)"]
-            PoolConfig["PDA: ['pool_config', mint]\n- Senior/Junior NAV\n- Yield Rate (BPS)\n- Total Outstanding"]
-            KYCRegistry["PDA: ['kyc_registry', authority]\n- BitMap / Merkle Root\n- OFAC Blacklist Bitmap"]
-            SeniorVault["PDA: ['vault', 'senior']\nUnderlying Asset Account (USDC)"]
-            JuniorVault["PDA: ['vault', 'junior']\nUnderlying Asset Account (USDC)"]
-            RedemptionQueue["PDA: ['redemptions', epoch]\n- Batched Settlement Queue"]
-        end
-
-        subgraph Token_2022["Token-2022 Extensions Core"]
-            SeniorMint["Senior Token-2022 Mint\n- Interest-Bearing Config\n- Transfer Hook Extension\n- Default State: Frozen"]
-            JuniorMint["Junior Token-2022 Mint\n- Dynamic Floating Yield\n- Transfer Hook Extension"]
-            TransferHookProg["Transfer Hook Program\n- Checks ['kyc_registry']\n- Enforces Lockup / Jurisdiction"]
-        end
-
-        subgraph Oracles_External["External Feeds & Custody"]
-            PythFeed["Pyth / Chainlink RWA Price Feed\n(Off-chain T-Bill Discount Curve)"]
-            CustodyBank["Off-Chain Qualified Custodian\n(Fedwire / BNY Mellon Reserve)"]
-        end
+    subgraph Solana_Runtime["Solana On-Chain Infrastructure (Token-2022)"]
+        Program["Solana Invoice Credit Engine<br/>(Anchor Program ID)"]
+        VaultState["Asset Vault State PDA<br/>[seeds: b'vault', pool_id]"]
+        TrancheToken["Senior Tranche Mint<br/>(Token-2022 + Transfer Hook)"]
+        HookProgram["Transfer Hook Compliance Program<br/>(Sanctions & Accreditation Registry)"]
+        EscrowPDA["Repayment Escrow Token Account<br/>(USDC Collateral)"]
     end
 
-    %% Investment Flows
-    LP_Senior -- "1. Deposit USDC" --> SeniorVault
-    SeniorVault -.->|"2. Mints sTBILL via Token-2022"| SeniorMint
-    SeniorMint -- "3. Credit sTBILL" --> LP_Senior
+    subgraph Capital_Markets["Institutional Capital Markets"]
+        SeniorLP["Senior Institutional LP<br/>(Yield: SOFR + 450bps)"]
+        Borrower["Corporate Debtor<br/>(Invoice Settlement)"]
+    end
 
-    LP_Junior -- "1. Deposit USDC (Subordinated)" --> JuniorVault
-    JuniorVault -.->|"2. Mints jCREDIT via Token-2022"| JuniorMint
-    JuniorMint -- "3. Credit jCREDIT" --> LP_Junior
+    %% Workflow Connections
+    ERP -->|1. Generate Invoice Hash & Metadata| Issuer
+    Issuer -->|2. Request Attestation Proof| Oracle
+    Oracle -->|3. Signed Collateral Proof| Program
+    Issuer -->|4. Initialize Asset Pool & Underwrite| Program
+    Program -->|5. Initialize Vault PDA & Mint| VaultState
+    Program -->|6. Configure Transfer Hook Interface| HookProgram
 
-    %% Transfer Hook Validation
-    LP_Senior -- "Secondary OTC / DEX Transfer" --> TransferHookProg
-    TransferHookProg -->|"CPI Verify KYC/AML Bitwise State"| KYCRegistry
-    KYCRegistry -- "Approved" --> SeniorMint
+    SeniorLP -->|7. Deposit USDC Liquidity| Program
+    Program -->|8. Transfer USDC to Issuer| Issuer
+    Program -->|9. Mint Token-2022 Debt Tokens| SeniorLP
 
-    %% Yield & Keeper Oracles
-    PythFeed -- "Real-time NAV Push" --> Keeper
-    CustodyBank -- "Attestation of Reserve (AoR)" --> Keeper
-    Keeper -- "Epoch Crank: Rebalance & Distribute Yield" --> PoolConfig
-    PoolConfig -->|"Update Interest-Bearing Rate"| SeniorMint
-    PoolConfig -->|"Settles Batched Burn Requests"| RedemptionQueue
-    RedemptionQueue -->|"Unlocks Capital"| SeniorVault
+    SeniorLP -->|10. Secondary Transfer Attempt| TrancheToken
+    TrancheToken -->|11. Execute Verification CPI| HookProgram
+    HookProgram -->|12. Validate KycStatus PDA| TrancheToken
+
+    Borrower -->|13. Settle Outstanding Invoice (USDC)| EscrowPDA
+    EscrowPDA -->|14. Trigger Vault Reconciliation| Program
+    Program -->|15. Burn Tranche Tokens & Pay Principal+Yield| SeniorLP
+    Program -->|16. Emit CreditEvent Log| Notifier
+    Notifier -->|17. Dispatch Email Audit & Webhook| Enterprise_Layer
