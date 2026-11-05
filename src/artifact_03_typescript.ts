@@ -176,7 +176,7 @@ async function main() {
     rpcUrl: process.env.SOLANA_RPC_URL || clusterApiUrl("devnet"),
     payerKeypair: Keypair.fromSecretKey(secretKey),
     programId: new PublicKey("So1PV11111111111111111111111111111111111111"),
-    resendApiKey: process.env.RESEND_API_KEY || "re_test_dummy_key",
+    resendApiKey: process.env.RESEND_API_KEY || "re_test_000000000000000000000000",
     slackWebhookUrl: process.env.SLACK_WEBHOOK_URL || "",
     poolName: "SolPV-Austin-Solar-01",
   });

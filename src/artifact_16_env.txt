@@ -3,6 +3,6 @@ SOLANA_RPC_URL=https://api.devnet.solana.com
 ANCHOR_WALLET=./id.json
 
 # Enterprise Notification Telemetry
-RESEND_API_KEY=re_123456789_abcdefghijklmnopqrstuvwxyz
+RESEND_API_KEY=re_test_000000000000000000000000
 RESEND_FROM_EMAIL=settlements@solcredit.finance
 SLACK_WEBHOOK_URL=https://api.example.com/webhooks/alerts/placeholder

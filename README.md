@@ -879,7 +879,7 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
-const RESEND_API_KEY = process.env.RESEND_API_KEY || "re_dummy_key_for_testing";
+const RESEND_API_KEY = process.env.RESEND_API_KEY || "re_test_000000000000000000000000";
 const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL || "";
 const resend = new Resend(RESEND_API_KEY);
 
@@ -911,7 +911,7 @@ export async function sendEnterpriseAlert(subject: string, details: Record<strin
   }
 
   // 2. Dispatch Resend Email Audit if configured
-  if (process.env.AUDIT_EMAIL_RECIPIENT && RESEND_API_KEY !== "re_dummy_key_for_testing") {
+  if (process.env.AUDIT_EMAIL_RECIPIENT && RESEND_API_KEY !== "re_test_000000000000000000000000") {
     try {
       await resend.emails.send({
         from: "telemetry@solana-rwa-engine.com",

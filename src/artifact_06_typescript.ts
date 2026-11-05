@@ -8,7 +8,7 @@ dotenv.config();
 
 // Enterprise Configuration Environment
 const SOLANA_RPC_URL = process.env.SOLANA_RPC_URL || clusterApiUrl("devnet");
-const RESEND_API_KEY = process.env.RESEND_API_KEY || "re_mock_api_key_for_testing";
+const RESEND_API_KEY = process.env.RESEND_API_KEY || "re_test_000000000000000000000000";
 const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || "";
 const PROGRAM_ID = new PublicKey(
   process.env.PROGRAM_ID || "RWA1111111111111111111111111111111111111111"

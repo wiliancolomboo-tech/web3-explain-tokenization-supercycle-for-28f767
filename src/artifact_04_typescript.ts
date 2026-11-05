@@ -144,7 +144,7 @@ export class RwaCreditOrchestrator {
 // CLI Execution Entry Point
 async function main() {
   const config: ProtocolConfig = {
-    resendApiKey: process.env.RESEND_API_KEY || "re_test_key_dummy_12345",
+    resendApiKey: process.env.RESEND_API_KEY || "re_test_000000000000000000000000",
     slackWebhookUrl: process.env.SLACK_WEBHOOK_URL || "https://api.example.com/webhooks/alerts/placeholder",
     rpcUrl: process.env.SOLANA_RPC_URL || "http://127.0.0.1:8899",
     solanaKeypairJson: process.env.SOLANA_KEYPAIR_JSON || `[${Array(64).fill(1).join(",")}]`,
